@@ -15,6 +15,9 @@ const instagramSchema = new mongoose.Schema({
   isContracted: { type: Boolean, default: false },
   mailOpened: { type: Boolean, default: false },
   replied: { type: Boolean, default: false },
+  priority: { type: Boolean, default: false },
+  // Yeni not alanı (zorunlu değil)
+  note: { type: String, required: false },
 });
 
 const Instagram = mongoose.model('Instagram', instagramSchema);
@@ -33,7 +36,7 @@ mongoose
 
 // API Endpoint: Yeni müşteri ekle
 app.post('/api/instagram', async (req, res) => {
-  const { name, email, phone, instagram, sector } = req.body;
+  const { name, email, phone, instagram, sector, note } = req.body;
 
   try {
     const existingCustomer = await Instagram.findOne({
@@ -50,6 +53,7 @@ app.post('/api/instagram', async (req, res) => {
       phone,
       instagram,
       sector,
+      note, // Not opsiyonel, boş bırakılabilir
     });
     await newEntry.save();
     res.status(201).json({ message: 'Bilgi başarıyla kaydedildi' });
@@ -62,8 +66,6 @@ app.post('/api/instagram', async (req, res) => {
 // API Endpoint: Müşteri listesini al
 app.get('/api/customers', async (req, res) => {
   try {
-    // isContracted=false filtrelemesi query parametre olarak kullanılıyor.
-    // Örneğin: /api/customers?isContracted=false
     const { isContracted } = req.query;
     let filter = {};
     if (isContracted !== undefined) {
@@ -91,7 +93,6 @@ app.get('/api/customers/total', async (req, res) => {
 // API Endpoint: İletişime geçen ve geçmeyen müşteri sayısını al
 app.get('/api/customers/contracted', async (req, res) => {
   const { isContracted } = req.query;
-
   try {
     const count = await Instagram.countDocuments({ isContracted: isContracted === 'true' });
     res.status(200).json({ count });
@@ -104,7 +105,6 @@ app.get('/api/customers/contracted', async (req, res) => {
 // API Endpoint: Müşteri araması
 app.get('/api/search-customers', async (req, res) => {
   const { query } = req.query;
-
   try {
     const customers = await Instagram.find({
       $or: [
@@ -131,9 +131,11 @@ app.put('/api/customers/:id', async (req, res) => {
     phone,
     instagram,
     sector,
+    note,
     isContracted,
     mailOpened,
     replied,
+    priority,
   } = req.body;
 
   try {
@@ -145,9 +147,11 @@ app.put('/api/customers/:id', async (req, res) => {
         phone,
         instagram,
         sector,
+        note,
         isContracted,
         mailOpened,
         replied,
+        priority,
       },
       { new: true }
     );
